@@ -1,0 +1,116 @@
+ha-card {
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  background-color: rgba(115, 115, 115, 0.25);
+  height: 100%;
+}
+
+ha-card p {
+  color: #97989c;
+  font-weight: 500;
+  margin: 0;
+  font-size: 20px;
+}
+
+ha-card.on p {
+  color: #4b5254;
+}
+
+.on {
+  background-color: #dfe0e0
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: start;
+  height: calc(100% - 32px);
+}
+
+#slider-box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#slider {
+  background-color: rgba(0, 0, 0, 0.1);
+  height: 100%;
+  z-index: 0;
+  display: absolute;
+}
+
+.width-transition {
+  transition: width 0.3s ease;
+}
+
+/* #slider-actual {
+  display: none;
+  z-index: 0;
+  height: 50%;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+#slider-actual.active {
+  display: absolute;
+} */
+
+
+
+@keyframes kf-light-on {
+  0% {
+    transform: scale(0.85);
+  }
+  20% {
+    transform: scale(1.1);
+  }
+  40% {
+    transform: scale(0.95);
+  }
+  60% {
+    transform: scale(1.03);
+  }
+  80% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.icon {
+  width: min(60%, 48px);
+  height: min(60%, 48px);
+  transition: fill 0.3s ease;
+  z-index: 1
+}
+
+.light-on {
+  animation: kf-light-on 0.8s;
+  transform-origin: center;
+  fill: #3389c2;
+}
+
+
+
+/*RIPPLE*/
+
+span.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 600ms linear;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}

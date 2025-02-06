@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "deploy",
+      "type": "shell",
+      "command": "scp -P 1022 ${workspaceFolder}/dist/card.js root@home.me:/mnt/user/appdata/homeassistant/config/www/stephil/card.js",
+      "options": {
+        "statusbar": {
+          "label": "Deploy to server",
+          "icon": {
+            "id": "repo-push"
+          }
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "watch-build",
+      "type": "shell",
+      "command": "npm run watch",
+      "options": {
+        "statusbar": {
+          "label": "Watch",
+          "icon": {
+            "id": "build"
+          }
+        }
+      },
+      "problemMatcher": []
+    }
+  ]
+}

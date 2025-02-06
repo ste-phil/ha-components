@@ -1,12 +1,12 @@
 <script lang="ts">
   const now = new Date();
-  $: hours = now.getHours();
-  $: minutes = now.getMinutes();
-  $: date = now.toLocaleDateString("en-US", {
+  let hours = $derived(now.getHours());
+  let minutes = $derived(now.getMinutes());
+  let date = $derived(now.toLocaleDateString("en-US", {
     day: "2-digit",
     month: "long",
     year: "numeric",
-  });
+  }));
 </script>
 
 <div class="container">

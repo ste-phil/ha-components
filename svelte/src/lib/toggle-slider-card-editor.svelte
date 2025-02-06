@@ -55,8 +55,12 @@
   } from "./entities";
   import { onMount } from "svelte";
 
-  export let config: ToggleSliderCardConfig = new ToggleSliderCardConfig();
-  export let hass: HomeAssistant;
+  interface Props {
+    config?: ToggleSliderCardConfig;
+    hass: HomeAssistant;
+  }
+
+  let { config = new ToggleSliderCardConfig(), hass }: Props = $props();
 
   onMount(() => {
     console.log(hass);
@@ -79,7 +83,7 @@
     include-domains="['cover', 'light']"
     label="Entity"
     required
-  />
+></ha-entity-picker>
   <ha-selector {hass} label="Entity" required></ha-selector>
 
   <ha-selector-select {hass} label="Entity"></ha-selector-select>

@@ -4,12 +4,21 @@
     import type { HomeAssistant, LovelaceCardConfig } from 'custom-card-helpers';
     import { cardUtil } from './cardUtil';
 
-    export let type = 'div';
-    export let style = "height: 100%";
-    export let config: LovelaceCardConfig;
-    export let hass: HomeAssistant;
+    interface Props {
+        type?: string;
+        style?: string;
+        config: LovelaceCardConfig;
+        hass: HomeAssistant;
+    }
 
-    let loading = true;
+    let {
+        type = 'div',
+        style = "height: 100%",
+        config,
+        hass
+    }: Props = $props();
+
+    let loading = $state(true);
     const uplift = (
         node: HTMLElement,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

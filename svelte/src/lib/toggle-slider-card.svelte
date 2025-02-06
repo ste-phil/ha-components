@@ -65,19 +65,23 @@
     ToggleSliderCardConfig,
     createRippleEffect,
   } from "./entities";
-  import { afterUpdate, onMount, tick } from "svelte";
+  import { onMount, tick } from "svelte";
 
-  export let config: ToggleSliderCardConfig = new ToggleSliderCardConfig();
-  export let hass: HomeAssistant;
+  interface Props {
+    config?: ToggleSliderCardConfig;
+    hass: HomeAssistant;
+  }
+
+  let { config = new ToggleSliderCardConfig(), hass }: Props = $props();
 
   // bindings to the slider and its container HTML elements
-  let sliderElement: HTMLElement;
-  let sliderContainerElement: HTMLElement;
-  let sliderContainerElementWidth: number;
+  let sliderElement: HTMLElement = $state();
+  let sliderContainerElement: HTMLElement = $state();
+  let _sliderContainerWidthInPx: number = $state(0);
 
   let init = false;
 
-  let _isMouseDown = false;
+  let _isMouseDown = $state(false);
   let _hasMouseMoved = false;
   let _mouseDownPos: { x: number; y: number };
   let _mouseDownOffset: number;
@@ -93,18 +97,19 @@
   let _interactionUpdateIgnoreTime_ms = 1500;
 
   let _requestedPercentage: number | null = null;
-  let _sliderWidthInPx: number;
-
-  $: initSliderSizeInPx();
+  let _sliderWidthInPx: number = $state(0);
 
   onMount(() => {
-    // console.log(hass);
-
     console.log("onMount");
-
     ["mouseup", "touchend"].forEach((name) => {
       document.addEventListener(name, (e) => OnMouseUp(e));
     });
+  });
+
+  $effect(() => {
+    // console.log("effect", sliderContainerElementWidth);
+
+    initSliderSizeInPx();
   });
 
   //#region Properties
@@ -182,11 +187,6 @@
     if (getHassEntityState() == undefined || init) return;
 
     let p = getRequestedPercentage();
-
-    // for some reason we need to wait twice
-    await tick();
-    await tick();
-
     if (sliderContainerElement.clientWidth != 0) {
       console.log("initSliderSizeInPx", p, sliderContainerElement.clientWidth);
       _sliderWidthInPx = p * sliderContainerElement.clientWidth;
@@ -260,7 +260,7 @@
 
     // If the mouse has moved, we don't want to trigger a click event
     if (_hasMouseMoved) {
-      SetDevicePercentage(getRequestedPercentage());
+      SetDevicePercentage(_sliderWidthInPx / _sliderContainerWidthInPx);
       return;
     }
 
@@ -302,6 +302,7 @@
     const type = getEntityType();
     switch (type) {
       case "cover":
+        console.log("SetDevicePercentage", percentage * 100);
         hass.callService("cover", "set_cover_position", {
           entity_id: config.entity,
           position: percentage * 100,
@@ -358,15 +359,15 @@
 
 <ha-card>
   {#if hasEntity()}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="card-content"
       class:on={isOn()}
-      on:mousedown={OnMouseDown}
-      on:touchstart={OnMouseDown}
-      on:mousemove={OnMouseMoved}
-      on:touchmove={OnMouseMoved}
+      onmousedown={OnMouseDown}
+      ontouchstart={OnMouseDown}
+      onmousemove={OnMouseMoved}
+      ontouchmove={OnMouseMoved}
     >
       {#if getEntityType() == "light"}
         <svg
@@ -478,7 +479,7 @@
       <div
         id="slider-box"
         bind:this={sliderContainerElement}
-        bind:clientWidth={sliderContainerElementWidth}
+        bind:clientWidth={_sliderContainerWidthInPx}
       >
         <div
           id="slider"

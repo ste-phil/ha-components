@@ -59,8 +59,12 @@
   import Card from "./Card.svelte";
   import SidebarHeader from "./SidebarHeader.svelte";
 
-  export let config: ExtendedViewConfig = new ExtendedViewConfig();
-  export let hass: HomeAssistant;
+  interface Props {
+    config?: ExtendedViewConfig;
+    hass: HomeAssistant;
+  }
+
+  let { config = new ExtendedViewConfig(), hass }: Props = $props();
 
   onMount(() => {
     console.log(hass);
@@ -139,13 +143,13 @@
     <footer>
       {#each config.footer as footerAction}
         <button
-          on:mousedown={OnFooterBtnMouseDown}
-          on:touchstart={OnFooterBtnTouchStarted}
-          on:mouseup={() => {
+          onmousedown={OnFooterBtnMouseDown}
+          ontouchstart={OnFooterBtnTouchStarted}
+          onmouseup={() => {
             OnFooterClicked(footerAction);
           }}
         >
-          <ha-icon icon="mdi:{footerAction.icon}" class={`primaryico`} />
+          <ha-icon icon="mdi:{footerAction.icon}" class={`primaryico`}></ha-icon>
           {footerAction.name}
         </button>
       {/each}

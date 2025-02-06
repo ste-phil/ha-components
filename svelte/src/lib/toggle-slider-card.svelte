@@ -107,10 +107,6 @@
     });
   });
 
-  afterUpdate(() => {
-    console.log("afterUpdate", sliderContainerElementWidth);
-  });
-
   //#region Properties
   function hasEntity() {
     return (

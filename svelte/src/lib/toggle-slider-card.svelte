@@ -94,6 +94,7 @@
   let _requestedPercentage: number | null = null;
   let _sliderWidthInPx: number = $state(0);
   let _sliderContainerWidthInPx: number = $state(0);
+  const _sliderContainerWidthInPxOf = $derived(_sliderContainerWidthInPx + 5); // Add 5px that the slider always fills the container
 
   onMount(() => {
     ["mouseup", "touchend"].forEach((name) => {
@@ -110,8 +111,10 @@
   $effect(() => {
     initSliderSizeInPx();
 
+    if (_ignoreHassUpdates) return;
+
     const p = getDevicePercentage();
-    _sliderWidthInPx = p * _sliderContainerWidthInPx;
+    _sliderWidthInPx = p * _sliderContainerWidthInPxOf;
   });
 
   //#region Properties
@@ -189,9 +192,8 @@
     if (getHassEntityState() == undefined || init) return;
 
     let p = getRequestedPercentage();
-    if (_sliderContainerWidthInPx != 0) {
-      // console.log("initSliderSizeInPx", p, _sliderContainerWidthInPx);
-      _sliderWidthInPx = p * _sliderContainerWidthInPx;
+    if (_sliderContainerWidthInPxOf != 0) {
+      _sliderWidthInPx = p * _sliderContainerWidthInPxOf;
       init = true;
     }
   }
@@ -242,10 +244,14 @@
       x: mousePos.x - _mouseDownPos.x,
       y: mousePos.y - _mouseDownPos.y,
     };
+    _ignoreHassUpdates = true;
 
     if (Math.abs(diff.x) > _mouseMoveRegisterThreshold || _hasMouseMoved) {
       let sliderSize = _mouseDownOffset + diff.x;
-      sliderSize = Math.min(Math.max(sliderSize, 0), _sliderContainerWidthInPx);
+      sliderSize = Math.min(
+        Math.max(sliderSize, 0),
+        _sliderContainerWidthInPxOf
+      );
 
       _sliderWidthInPx = sliderSize;
       _hasMouseMoved = true;
@@ -255,10 +261,11 @@
   function OnMouseUp(e: any) {
     if (!_isMouseDown) return;
     _isMouseDown = false;
+    _ignoreHassUpdates = false;
 
     // If the mouse has moved, we don't want to trigger a click event
     if (_hasMouseMoved) {
-      SetDevicePercentage(_sliderWidthInPx / _sliderContainerWidthInPx);
+      SetDevicePercentage(_sliderWidthInPx / _sliderContainerWidthInPxOf);
       return;
     }
 
@@ -290,12 +297,12 @@
   }
 
   function SetDevicePercentage(percentage: number) {
-    _ignoreHassUpdates = true;
-    if (_ignoreHassTimeoutId) clearTimeout(_ignoreHassTimeoutId);
+    // _ignoreHassUpdates = true;
+    // if (_ignoreHassTimeoutId) clearTimeout(_ignoreHassTimeoutId);
 
-    _ignoreHassTimeoutId = setTimeout(() => {
-      _ignoreHassUpdates = false;
-    }, _interactionUpdateIgnoreTime_ms);
+    // _ignoreHassTimeoutId = setTimeout(() => {
+    //   _ignoreHassUpdates = false;
+    // }, _interactionUpdateIgnoreTime_ms);
 
     const type = getEntityType();
     switch (type) {

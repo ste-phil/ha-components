@@ -60,12 +60,9 @@
 
 <script lang="ts">
   import type { HomeAssistant } from "custom-card-helpers";
-  import {
-    Group,
-    ToggleSliderCardConfig,
-    createRippleEffect,
-  } from "./entities";
-  import { onMount, tick } from "svelte";
+  import { Group, ToggleSliderCardConfig } from "./entities";
+  import { onMount } from "svelte";
+  import { ripple } from "./ripple";
 
   interface Props {
     config?: ToggleSliderCardConfig;
@@ -76,8 +73,6 @@
 
   // bindings to the slider and its container HTML elements
   let sliderElement: HTMLElement = $state();
-  let sliderContainerElement: HTMLElement = $state();
-  let _sliderContainerWidthInPx: number = $state(0);
 
   let init = false;
 
@@ -98,18 +93,25 @@
 
   let _requestedPercentage: number | null = null;
   let _sliderWidthInPx: number = $state(0);
+  let _sliderContainerWidthInPx: number = $state(0);
 
   onMount(() => {
-    console.log("onMount");
     ["mouseup", "touchend"].forEach((name) => {
       document.addEventListener(name, (e) => OnMouseUp(e));
     });
+
+    ["mousemove", "touchmove"].forEach((name) => {
+      document.addEventListener(name, (e) => OnMouseMoved(e));
+    });
   });
 
+  // This is called when the hass state updates
+  // aka pretty often
   $effect(() => {
-    // console.log("effect", sliderContainerElementWidth);
-
     initSliderSizeInPx();
+
+    const p = getDevicePercentage();
+    _sliderWidthInPx = p * _sliderContainerWidthInPx;
   });
 
   //#region Properties
@@ -187,9 +189,9 @@
     if (getHassEntityState() == undefined || init) return;
 
     let p = getRequestedPercentage();
-    if (sliderContainerElement.clientWidth != 0) {
-      console.log("initSliderSizeInPx", p, sliderContainerElement.clientWidth);
-      _sliderWidthInPx = p * sliderContainerElement.clientWidth;
+    if (_sliderContainerWidthInPx != 0) {
+      // console.log("initSliderSizeInPx", p, _sliderContainerWidthInPx);
+      _sliderWidthInPx = p * _sliderContainerWidthInPx;
       init = true;
     }
   }
@@ -243,12 +245,8 @@
 
     if (Math.abs(diff.x) > _mouseMoveRegisterThreshold || _hasMouseMoved) {
       let sliderSize = _mouseDownOffset + diff.x;
-      sliderSize = Math.min(
-        Math.max(sliderSize, 0),
-        sliderContainerElement.clientWidth
-      );
+      sliderSize = Math.min(Math.max(sliderSize, 0), _sliderContainerWidthInPx);
 
-      // sliderElement.style.width = `${sliderSize}px`;
       _sliderWidthInPx = sliderSize;
       _hasMouseMoved = true;
     }
@@ -366,8 +364,6 @@
       class:on={isOn()}
       onmousedown={OnMouseDown}
       ontouchstart={OnMouseDown}
-      onmousemove={OnMouseMoved}
-      ontouchmove={OnMouseMoved}
     >
       {#if getEntityType() == "light"}
         <svg
@@ -375,7 +371,7 @@
           class="icon"
           class:icon-on={isOn()}
           viewBox="0 0 50 50"
-          fill="#9da0a2"
+          fill="#bdbdbd"
         >
           <path
             d="M27.4 47.3h-4.9s-.7.1-.7.8.4.9.7.9h4.9c.3 0 .7-.1.7-.9s-.7-.8-.7-.8zm3.3-2.9H19.3s-.8 0-.8.8.6.9.8.9h11.5c.2 0 .8-.1.8-.9-.1-.8-.9-.8-.9-.8zm0-3H19.3s-.8 0-.8.8.6.9.8.9h11.5c.2 0 .8-.1.8-.9-.1-.8-.9-.8-.9-.8zm0-2.9H19.3s-.8 0-.8.8.6.9.8.9h11.5c.2 0 .8-.1.8-.9s-.9-.8-.9-.8zm5.2-23.2c-3.3-5.3-7-5.6-10.9-5.6-3.8 0-8.4.4-10.9 5.6-.1.1-.1.3.1.7.4.8 3.3 7.2 3.2 18.8 0 1.1-.1 1.6 0 1.7 0 .1 0 .7 1.1.7h13c1 0 1-.5 1.1-.7v-1.7c-.1-11.6 2.8-18 3.2-18.8.1-.4.1-.5.1-.7"
@@ -398,7 +394,7 @@
         >
           <style>
             .cls-1 {
-              fill: #9da0a2;
+              fill: #bdbdbd;
             }
 
             svg > polygon {
@@ -478,8 +474,8 @@
       <p id="label">{getEntityName()}</p>
       <div
         id="slider-box"
-        bind:this={sliderContainerElement}
         bind:clientWidth={_sliderContainerWidthInPx}
+        use:ripple={{ color: "rgba(0, 0, 0, 0.3)", duration: 600 }}
       >
         <div
           id="slider"
@@ -500,25 +496,14 @@
     overflow: hidden;
     cursor: pointer;
     border: none;
-    background-color: rgba(115, 115, 115, 0.25);
+    /* background-color: rgba(115, 115, 115, 0.25); */
+    border: 1px solid var(--divider-color);
     height: 100%;
   }
 
-  ha-card p {
-    color: #97989c;
-    font-weight: 500;
-    margin: 0;
-    font-size: 20px;
-    user-select: none;
-  }
-
-  ha-card.on p {
-    color: #4b5254;
-  }
-
-  .on {
+  /* .on {
     background-color: #dfe0e0;
-  }
+  } */
 
   .card-content {
     display: flex;
@@ -527,6 +512,18 @@
     align-items: start;
     height: calc(100% - 32px);
   }
+
+  .card-content p {
+    color: var(--secondary-text-color);
+    font-weight: 500;
+    margin: 0;
+    font-size: 20px;
+    user-select: none;
+  }
+
+  /* .card-content.on p {
+    color: #4b5254;
+  } */
 
   #slider-box {
     position: absolute;
@@ -537,7 +534,7 @@
   }
 
   #slider {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgb(108 108 108 / 30%);
     height: 100%;
     z-index: 0;
     display: absolute;
@@ -585,28 +582,13 @@
     height: min(60%, 48px);
     transition: fill 0.3s ease;
     z-index: 1;
+    right: 24px;
+    position: absolute;
   }
 
   .light-on {
     animation: kf-light-on 0.8s;
     transform-origin: center;
     fill: #3389c2;
-  }
-
-  /*RIPPLE*/
-
-  span.ripple {
-    position: absolute;
-    border-radius: 50%;
-    transform: scale(0);
-    animation: ripple 600ms linear;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  @keyframes ripple {
-    to {
-      transform: scale(4);
-      opacity: 0;
-    }
   }
 </style>
